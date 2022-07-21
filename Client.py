@@ -1,8 +1,9 @@
 import socket
 import threading
+import playsound
 import PySimpleGUI as sg
 from socket import error as SocketError
-import playsound
+from cryptography.fernet import Fernet
 
 font1=("Helvetica", 14)
 font2=("Helvetica", 12)
@@ -12,13 +13,14 @@ layout_recv=[[sg.Multiline(size=(61,20),font=font1, disabled=True, key="TextBox"
 layout_send=[[sg.Text('Message', font=font2), sg.InputText('Message',do_not_clear=False, font=font1, key="Message"), sg.Button("Send", font=font2, button_color="green", bind_return_key=True), sg.Button("Quit", font=font2, button_color="orange")]]
 
 class felpa_client():
-    def __init__(self, host, port, name, password_hash, window, window_menu):
+    def __init__(self, host, port, name, password_hash, password_b64, window, window_menu):
         self.host = host
         self.port = port
         self.username = name
         self.quit = False
         self.color = ""
         self.password_hash = password_hash
+        self.password_b64 = password_b64
         self.window = window
         self.window_menu = window_menu
 
@@ -59,12 +61,14 @@ class felpa_client():
         except SocketError as e:
             #print(e)
             return 0
+        if server.recv(1024).decode() != "[OK]":
+            return 1
         server.sendall(self.password_hash.encode())  # Step 2 send password
         if server.recv(1024).decode() != "[GRANTED]":
-            return 1
+            return 2
         server.sendall(self.username.encode())  # Step 2 send username
         if server.recv(1024).decode() != "[OK_NAME]":
-            return 2
+            return 3
 
         self.window_menu.close()
         self.window.close()
