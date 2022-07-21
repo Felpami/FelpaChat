@@ -1,9 +1,11 @@
+import base64
 from Server import felpa_server
 from Client import felpa_client
 import PySimpleGUI as sg
 import hashlib
 import socket
-import playsound
+
+from cryptography.fernet import Fernet
 
 font1=("Helvetica", 14)
 font2=("Helvetica", 12)
@@ -43,39 +45,47 @@ def main():
     while True:
         event, values = window_menu.read()
         if event == "Host":
-            layout_host = [[sg.Text('Server IP      ', font=font2), sg.InputText(font=font1, key="IP", size=(21,1))],
-                           [sg.Text('Server Port  ', font=font2), sg.InputText(font=font1, key="Port", size=(21,1))],
-                           [sg.Text('Password    ', font=font2), sg.InputText(font=font1, key="Password_host", size=(21,1), password_char='*')],
-                           [sg.Button("Host", font=font2, bind_return_key=True, button_color="green", size=(17, 1)), sg.Exit(font=font2, button_color="orange", size=(17, 1))]]
-            window_host = sg.Window(title="HostForm", font=font2, layout=layout_host, finalize=True)
-            window_host.TKroot.focus_force()
-            window_host["IP"].Update(get_local_ip())
-            window_host["Port"].Update(7777)
-            event, values = window_host.read()
-            if event == "Exit" or event == sg.WINDOW_CLOSED:
-                window_host.close()
-            else:
-                if values["Password_host"] != "":
-                    password_hash = hashlib.sha256(values["Password_host"].encode()).hexdigest()
+            while True:
+                layout_host = [[sg.Text('Server IP      ', font=font2), sg.InputText(font=font1, key="IP", size=(21,1))],
+                               [sg.Text('Server Port  ', font=font2), sg.InputText(font=font1, key="Port", size=(21,1))],
+                               [sg.Text('Dimension   ', font=font2), sg.InputText(font=font1, key="Dimension", size=(21, 1))],
+                               [sg.Text('UserName   ', font=font2), sg.InputText(font=font1, key="Username", size=(21, 1))],
+                               [sg.Text('Password    ', font=font2), sg.InputText(font=font1, key="Password_host", size=(21,1), password_char='*')],
+                               [sg.Button("Host", font=font2, bind_return_key=True, button_color="green", size=(17, 1)), sg.Exit(font=font2, button_color="orange", size=(17, 1))]]
+                window_host = sg.Window(title="HostForm", font=font2, layout=layout_host, finalize=True)
+                window_host.TKroot.focus_force()
+                window_host["IP"].Update(get_local_ip())
+                window_host["Port"].Update(7777)
+                window_host["Dimension"].Update(5)
+                window_host["Username"].Update("Admin")
+                event, values = window_host.read()
+                if event == "Exit" or event == sg.WINDOW_CLOSED:
+                    window_host.close()
+                    break
                 else:
-                    password_hash = " "
-                try:
-                    if int(values["Port"]) > 65536:
+                    try:
+                        if int(values["Port"]) > 65536 or int(values["Dimension"]) > 99:
+                            popup("Incorrect settings.")
+                            window_host.close()
+                        else:
+                            if values["Password_host"] != "":
+                                password_hash = hashlib.sha256(values["Password_host"].encode()).hexdigest()
+                                password_b64 = base64.b64encode(values["Password_host"].encode("ascii")).decode()
+                            else:
+                                password_hash = " "
+                                password_b64 = " "
+                            serv = felpa_server(get_local_ip(), int(values["Port"]), int(values["Dimension"]), values["Username"], password_hash, password_b64, window_menu)
+                            window_host.close()
+                            ret = serv.server()
+                            if ret == 0:
+                                popup(f"Cannot start server on port {int(values['Port'])}")
+                                window_host.close()
+                                del serv
+                            quit()
+                    except Exception as e:
+                        print(e)
                         popup("Incorrect settings.")
                         window_host.close()
-                    else:
-                        serv = felpa_server("192.168.0.102", int(values["Port"]), password_hash, window_menu)
-                        window_host.close()
-                        ret = serv.server()
-                        if ret == 0:
-                            popup(f"Cannot start server on port {int(values['Port'])}")
-                            window_host.close()
-                            del serv
-                        quit()
-                except Exception as e:
-                    #print(e)
-                    popup("Incorrect settings.")
-                    window_host.close()
         elif event == "Connect":
             while (True):
                 layout_connect = [[sg.Text('Server IP      ', font=font2), sg.InputText(font=font1, key="IP", size=(21, 1))],
@@ -95,11 +105,6 @@ def main():
                     window_connect.close()
                     break
                 else:
-                    if values["Password_connect"] != "":
-                        password_hash = hashlib.sha256(values["Password_connect"].encode()).hexdigest()
-                    else:
-                        password_hash = " "
-
                     try:
                         store[0] = values["IP"]
                         store[1] = int(values["Port"])
@@ -108,8 +113,14 @@ def main():
                             popup("Incorrect settings.")
                             window_connect.close()
                         else:
+                            if values["Password_connect"] != "":
+                                password_hash = hashlib.sha256(values["Password_connect"].encode()).hexdigest()
+                                password_b64 = base64.b64encode(values["Password_connect"].encode("ascii")).decode()
+                            else:
+                                password_hash = " "
+                                password_b64 = " "
                             cln = felpa_client(store[0], store[1], store[2], password_hash,
-                                               window_connect, window_menu)
+                                               password_b64, window_connect, window_menu)
                             ret = cln.client()
                             if ret == 0:
                                 popup("Cannot contact server, retry.")
@@ -117,11 +128,17 @@ def main():
                                 # print("[-] Access denied.")
                                 del cln
                             elif ret == 1:
+                                popup("Server is already full.")
+                                window_connect.close()
+                                del cln
+                            elif ret == 2:
                                 popup("Incorrect password, retry.")
                                 window_connect.close()
-                            elif ret == 2:
+                                del cln
+                            elif ret == 3:
                                 popup("Username already in use.")
                                 window_connect.close()
+                                del cln
                             else:
                                 break
                     except Exception as e:
