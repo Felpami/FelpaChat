@@ -20,5 +20,4 @@ python .\FelpaChat.py
 
 ![immagine](https://user-images.githubusercontent.com/82824055/180242732-c1ba477a-88a8-4986-bb11-f73e91b4f302.png)
 
-
 TO-DO: Add crypt message sent
