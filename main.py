@@ -2,6 +2,7 @@ from Server import felpa_server
 from Client import felpa_client
 import PySimpleGUI as sg
 import hashlib
+import socket
 import playsound
 
 font1=("Helvetica", 14)
@@ -14,6 +15,20 @@ def popup(str):
     window_popup = sg.Window(title="Error", font=font2, layout=layout, finalize=True)
     window_popup.TKroot.focus_force()
     window_popup.read(close=True)
+
+def get_local_ip(): #grab the local ip
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(('8.8.8.8', 80))
+
+        return sock.getsockname()[0]
+    except socket.error:
+        try:
+            return socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            return '127.0.0.1'
+    finally:
+        sock.close()
 
 def main():
     layout_menu = [[sg.Text('             Welcome to FelpaChat!', font=font2)],
@@ -28,11 +43,13 @@ def main():
     while True:
         event, values = window_menu.read()
         if event == "Host":
-            layout_host = [[sg.Text('Server Port  ', font=font2), sg.InputText(font=font1, key="Port", size=(21,1))],
+            layout_host = [[sg.Text('Server IP      ', font=font2), sg.InputText(font=font1, key="IP", size=(21,1))],
+                           [sg.Text('Server Port  ', font=font2), sg.InputText(font=font1, key="Port", size=(21,1))],
                            [sg.Text('Password    ', font=font2), sg.InputText(font=font1, key="Password_host", size=(21,1), password_char='*')],
                            [sg.Button("Host", font=font2, bind_return_key=True, button_color="green", size=(17, 1)), sg.Exit(font=font2, button_color="orange", size=(17, 1))]]
             window_host = sg.Window(title="HostForm", font=font2, layout=layout_host, finalize=True)
             window_host.TKroot.focus_force()
+            window_host["IP"].Update(get_local_ip())
             window_host["Port"].Update(7777)
             event, values = window_host.read()
             if event == "Exit" or event == sg.WINDOW_CLOSED:
