@@ -1,6 +1,6 @@
 # FelpaChat
 
-Small chat multithread system project with Python
+Small multi client chat system project with Python
 
 ## Installation
 
