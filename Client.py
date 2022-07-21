@@ -39,7 +39,7 @@ class felpa_client():
                         window_send["TextBox"].print('\n', end='')
                         playsound.playsound("connected.wav", False)
                     else:
-                        window_send["TextBox"].print(msg[0][4:], background_color='Orange', end='')
+                        window_send["TextBox"].print(msg[0], background_color='Orange', end='')
                         window_send["TextBox"].print('\n', end='')
                         playsound.playsound("error.wav", False)
                 if self.quit:
@@ -48,9 +48,9 @@ class felpa_client():
                     break
             except SocketError as e:
                 #print(e)
-                window_send["TextBox"].print("[+] Server stopped!", background_color='Orange', end='')
+                window_send["TextBox"].print("[-] Server stopped!", background_color='Orange', end='')
                 window_send["TextBox"].print('\n', end='')
-                window_send["TextBox"].print("[+] Press quit or close the window.")
+                window_send["TextBox"].print("[*] Press quit or close the window.")
                 playsound.playsound("error.wav", False)
                 break
 
