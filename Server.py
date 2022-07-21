@@ -97,12 +97,24 @@ class felpa_server():
 
     def admin_command(self, command):
         if command.startswith("help"):
-            return "/kick <Username>    --->    kick user from FelpaChat."
+            return "/kick <Username>    --->    kick user from FelpaChat.\n/list                             --->    List all users connected  to FelpaChat."
+        elif command.startswith("list"):
+            layout_list = [[sg.Multiline(size=(25, 7), font=font1, disabled=True, key="ListBox")],
+                           [sg.Button("Exit", font=font2, button_color="orange", size=(8,1), key="Exit")]]
+            layout = [[sg.Column(layout_list, element_justification="c")]]
+            window_list = sg.Window(title=f"FelpaChat - Server", font=font2, layout=layout, finalize=True)
+            for user in self.username_a:
+                window_list["ListBox"].print(user)
+            while True:
+                event, values = window_list.read(close=True)
+                if event == "Exit" or event == sg.WINDOW_CLOSED:
+                    break
+            return ""
         elif command.startswith("kick"):
             cmd = command.split(" ")
             if len(cmd) != 2:
                 return "Invalid use of command /kick <Username>."
-            elif cmd[1] in self.username_a and cmd[1] != "Admin":
+            elif cmd[1] in self.username_a and cmd[1] != self.username:
                 position = self.username_a.index(cmd[1])
                 try:
                     self.conn_clients[position-1].close()
@@ -193,11 +205,11 @@ class felpa_server():
             self.username_a.remove(username)
             self.color.append(color)
             self.dimension += 1
-            window_send["TextBox"].print(f"[+] {username} disconnected to FelpaChat!", background_color='Orange', end='')
+            window_send["TextBox"].print(f"[-] {username} disconnected to FelpaChat!", background_color='Orange', end='')
             window_send["TextBox"].print('\n', end='')
             client_msg = f"{username} disconnected from FelpaChat."
             self.broadcast(f"[-] {client_msg}")
-            playsound.playsound("incoming.wav")
+            playsound.playsound("error.wav")
 
     def server(self):  # main shell function
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -236,7 +248,8 @@ class felpa_server():
                     msg = values["Message"]
                     if msg.startswith("/"):
                         cmd_res = self.admin_command(msg[1:])
-                        window_send["TextBox"].print(cmd_res)
+                        if cmd_res != "":
+                            window_send["TextBox"].print(cmd_res)
                     else:
                         window_send["TextBox"].print(f"[{self.username}] ", text_color="red", end='')
                         window_send["TextBox"].print(": " + msg)
