@@ -10,12 +10,15 @@ font2=("Helvetica", 12)
 
 
 class felpa_server():
-    def __init__(self, host, port, password_hash, window_menu):
+    def __init__(self, host, port, dimension, username, password_hash, password_b64, window_menu):
         self.host = host
         self.port = port
-        self.username_a = ["Admin"]
+        self.dimension = dimension
+        self.username = username
+        self.username_a = [username]
         self.conn_clients = []
         self.password_hash = password_hash
+        self.password_b64 = password_b64
         self.window_menu = window_menu
         self.color = ['lemon chiffon', 'mint cream', 'azure', 'alice blue', 'lavender',
                   'lavender blush', 'misty rose', 'dark slate gray', 'dim gray', 'slate gray',
@@ -121,8 +124,13 @@ class felpa_server():
         while (True):
             try:
                 conn, addr = s.accept()
-                connection_t = threading.Thread(target=self.connection_loop, args=(conn, window_send,), daemon=True)
-                connection_t.start()
+                if self.dimension == 0:
+                    conn.sendall("[FULL]".encode())
+                else:
+                    conn.sendall("[OK]".encode())
+                    self.dimension -= 1
+                    connection_t = threading.Thread(target=self.connection_loop, args=(conn, window_send,), daemon=True)
+                    connection_t.start()
             except SocketError as e:
                 #print(e)
                 break
@@ -169,6 +177,7 @@ class felpa_server():
                         self.conn_clients.remove(conn)
                         self.username_a.remove(username)
                         self.color.append(color)
+                        self.dimension += 1
                         window_send["TextBox"].print(f"[+] {username} disconnected to FelpaChat!", background_color='Orange', end='')
                         window_send["TextBox"].print('\n', end='')
                         playsound.playsound("error.wav", False)
@@ -183,6 +192,7 @@ class felpa_server():
             self.conn_clients.remove(conn)
             self.username_a.remove(username)
             self.color.append(color)
+            self.dimension += 1
             window_send["TextBox"].print(f"[+] {username} disconnected to FelpaChat!", background_color='Orange', end='')
             window_send["TextBox"].print('\n', end='')
             client_msg = f"{username} disconnected from FelpaChat."
@@ -228,7 +238,7 @@ class felpa_server():
                         cmd_res = self.admin_command(msg[1:])
                         window_send["TextBox"].print(cmd_res)
                     else:
-                        window_send["TextBox"].print("Admin ", text_color="red", end='')
+                        window_send["TextBox"].print(f"[{self.username}] ", text_color="red", end='')
                         window_send["TextBox"].print(": " + msg)
                         self.broadcast(f"Admin[SEP]red[SEP]{msg}")
                 except Exception as e:
