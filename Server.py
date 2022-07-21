@@ -178,7 +178,7 @@ class felpa_server():
                         self.username_a.remove(username)
                         self.color.append(color)
                         self.dimension += 1
-                        window_send["TextBox"].print(f"[+] {username} disconnected to FelpaChat!", background_color='Orange', end='')
+                        window_send["TextBox"].print(f"[-] {username} disconnected to FelpaChat!", background_color='Orange', end='')
                         window_send["TextBox"].print('\n', end='')
                         playsound.playsound("error.wav", False)
                         break
