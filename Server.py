@@ -266,7 +266,7 @@ class felpa_server():
                         if "[SEP]" in msg:
                             window_send["TextBox"].print("Cannot send message with keyword '[SEP]'.")
                         elif len(msg) != 0:
-                            window_send["TextBox"].print(f"[{self.username}] ", text_color="red", end='')
+                            window_send["TextBox"].print(f"[{self.username}]", text_color="red", end='')
                             window_send["TextBox"].print(": " + msg)
                             self.broadcast(f"[{self.username}][SEP]red[SEP]{msg}")
                 except Exception as e:
