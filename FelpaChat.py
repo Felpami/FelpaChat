@@ -66,18 +66,19 @@ def main():
                             popup("Incorrect settings.")
                             window_host.close()
                         else:
-                            if values["Password_host"] != "":
-                                password_hash = hashlib.sha256(values["Password_host"].encode()).digest()
-                            else:
-                                password_hash = " "
-                            serv = felpa_server(get_local_ip(), int(values["Port"]), int(values["Dimension"]), values["Username"], password_hash, window_menu)
-                            window_host.close()
-                            ret = serv.server()
-                            if ret == 0:
-                                popup(f"Cannot start server on port {int(values['Port'])}")
+                            if values["Password_host"] == "":
+                                popup("Password cannot be empty.")
                                 window_host.close()
-                                del serv
-                            quit()
+                            else:
+                                password_hash = hashlib.sha256(values["Password_host"].encode()).digest()
+                                serv = felpa_server(get_local_ip(), int(values["Port"]), int(values["Dimension"]), values["Username"], password_hash, window_menu)
+                                window_host.close()
+                                ret = serv.server()
+                                if ret == 0:
+                                    popup(f"Cannot start server on port {int(values['Port'])}")
+                                    window_host.close()
+                                    del serv
+                                quit()
                     except Exception as e:
                         print(e)
                         popup("Incorrect settings.")
@@ -110,32 +111,32 @@ def main():
                             popup("Incorrect settings.")
                             window_connect.close()
                         else:
-                            if values["Password_connect"] != "":
+                            if values["Password_connect"] == "":
+                                popup("Password cannot be empty.")
+                            else:
                                 password_hash = hashlib.sha256(values["Password_connect"].encode()).digest()
-                            else:
-                                password_hash = " "
-                            cln = felpa_client(store[0], store[1], store[2], password_hash,
-                                               window_connect, window_menu)
-                            ret = cln.client()
-                            if ret == 0:
-                                popup("Cannot contact server, retry.")
-                                window_connect.close()
-                                # print("[-] Access denied.")
-                                del cln
-                            elif ret == 1:
-                                popup("Server is already full.")
-                                window_connect.close()
-                                del cln
-                            elif ret == 2:
-                                popup("Incorrect password, retry.")
-                                window_connect.close()
-                                del cln
-                            elif ret == 3:
-                                popup("Username already in use.")
-                                window_connect.close()
-                                del cln
-                            else:
-                                break
+                                cln = felpa_client(store[0], store[1], store[2], password_hash,
+                                                   window_connect, window_menu)
+                                ret = cln.client()
+                                if ret == 0:
+                                    popup("Cannot contact server, retry.")
+                                    window_connect.close()
+                                    # print("[-] Access denied.")
+                                    del cln
+                                elif ret == 1:
+                                    popup("Server is already full.")
+                                    window_connect.close()
+                                    del cln
+                                elif ret == 2:
+                                    popup("Incorrect password, retry.")
+                                    window_connect.close()
+                                    del cln
+                                elif ret == 3:
+                                    popup("Username already in use.")
+                                    window_connect.close()
+                                    del cln
+                                else:
+                                    break
                     except Exception as e:
                         print(e)
                         popup("Incorrect settings.")
