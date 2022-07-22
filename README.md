@@ -7,7 +7,7 @@ Small multi client chat system project with Python
 Run the following command:
 
 ```
-pip install -r requirements.txt
+pip install -r requirements
 ```
 
 ## Execute
