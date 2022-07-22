@@ -18,4 +18,6 @@ python .\FelpaChat.py
 
 ## Demo
 
-![immagine](https://user-images.githubusercontent.com/82824055/180242732-c1ba477a-88a8-4986-bb11-f73e91b4f302.png)
+
+![screen1](https://user-images.githubusercontent.com/82824055/180488871-02907a26-f902-4f9b-ba5d-927782c90f0f.png)
+![screen2](https://user-images.githubusercontent.com/82824055/180488875-6c26852f-5ca0-4f4d-947b-092b7883c99d.png)
