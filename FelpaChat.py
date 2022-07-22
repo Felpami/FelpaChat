@@ -1,11 +1,8 @@
-import base64
 from Server import felpa_server
 from Client import felpa_client
 import PySimpleGUI as sg
 import hashlib
 import socket
-
-from cryptography.fernet import Fernet
 
 font1=("Helvetica", 14)
 font2=("Helvetica", 12)
@@ -41,7 +38,7 @@ def main():
                    [sg.Button("Quit", font=font2, button_color="orange", size=(29, 1), key="Quit")]]
     window_menu = sg.Window(title="FelpaChat Menu", font=font2, layout=layout_menu, finalize=True)
     window_menu.TKroot.focus_force()
-    store = ["", 7777, ""]
+    store = ["", 7777, "", "Password"]
     while True:
         event, values = window_menu.read()
         if event == "Host":
@@ -58,6 +55,7 @@ def main():
                 window_host["Port"].Update(7777)
                 window_host["Dimension"].Update(5)
                 window_host["Username"].Update("Admin")
+                window_host["Password_host"].Update("Password")
                 event, values = window_host.read()
                 if event == "Exit" or event == sg.WINDOW_CLOSED:
                     window_host.close()
@@ -69,12 +67,10 @@ def main():
                             window_host.close()
                         else:
                             if values["Password_host"] != "":
-                                password_hash = hashlib.sha256(values["Password_host"].encode()).hexdigest()
-                                password_b64 = base64.b64encode(values["Password_host"].encode("ascii")).decode()
+                                password_hash = hashlib.sha256(values["Password_host"].encode()).digest()
                             else:
                                 password_hash = " "
-                                password_b64 = " "
-                            serv = felpa_server(get_local_ip(), int(values["Port"]), int(values["Dimension"]), values["Username"], password_hash, password_b64, window_menu)
+                            serv = felpa_server(get_local_ip(), int(values["Port"]), int(values["Dimension"]), values["Username"], password_hash, window_menu)
                             window_host.close()
                             ret = serv.server()
                             if ret == 0:
@@ -100,6 +96,7 @@ def main():
                 window_connect["IP"].Update(store[0])
                 window_connect["Port"].Update(store[1])
                 window_connect["Username"].Update(store[2])
+                window_connect["Password_connect"].Update(store[3])
                 event, values = window_connect.read()
                 if event == "Exit" or event == sg.WINDOW_CLOSED:
                     window_connect.close()
@@ -114,13 +111,11 @@ def main():
                             window_connect.close()
                         else:
                             if values["Password_connect"] != "":
-                                password_hash = hashlib.sha256(values["Password_connect"].encode()).hexdigest()
-                                password_b64 = base64.b64encode(values["Password_connect"].encode("ascii")).decode()
+                                password_hash = hashlib.sha256(values["Password_connect"].encode()).digest()
                             else:
                                 password_hash = " "
-                                password_b64 = " "
                             cln = felpa_client(store[0], store[1], store[2], password_hash,
-                                               password_b64, window_connect, window_menu)
+                                               window_connect, window_menu)
                             ret = cln.client()
                             if ret == 0:
                                 popup("Cannot contact server, retry.")
@@ -142,7 +137,7 @@ def main():
                             else:
                                 break
                     except Exception as e:
-                        #print(e)
+                        print(e)
                         popup("Incorrect settings.")
                         window_connect.close()
             #quit()
