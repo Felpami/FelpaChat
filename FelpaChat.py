@@ -69,6 +69,9 @@ def main():
                             if values["Password_host"] == "":
                                 popup("Password cannot be empty.")
                                 window_host.close()
+                            elif "[SEP]" in values["Username"]:
+                                popup("Cannot set username with keyword '[SEP]'.")
+                                window_host.close()
                             else:
                                 password_hash = hashlib.sha256(values["Password_host"].encode()).digest()
                                 serv = felpa_server(get_local_ip(), int(values["Port"]), int(values["Dimension"]), values["Username"], password_hash, window_menu)
@@ -113,6 +116,9 @@ def main():
                         else:
                             if values["Password_connect"] == "":
                                 popup("Password cannot be empty.")
+                            elif "[SEP]" in values["Username"]:
+                                popup("Cannot set username with keyword '[SEP]'.")
+                                window_host.close()
                             else:
                                 password_hash = hashlib.sha256(values["Password_connect"].encode()).digest()
                                 cln = felpa_client(store[0], store[1], store[2], password_hash,
