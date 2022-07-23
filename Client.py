@@ -118,7 +118,13 @@ class felpa_client():
                 except SocketError as e:
                     #print(e)
                     return 0
-        self.color = self.dec(server.recv(1024))
+        try:
+            server.sendall(self.enc("[OK]"))
+            self.color = self.dec(server.recv(1024))
+            server.sendall(self.enc("[OK]"))
+        except SocketError as e:
+            # print(e)
+            return 0
         layout_recv = [[sg.Multiline(size=(67, 20), font=font1, disabled=True, key="TextBox"),
                         sg.Multiline(size=(17, 20), font=font1, disabled=True, key="ListBox")]]
         layout_send = [
