@@ -107,10 +107,10 @@ class felpa_server():
     def enc(self, msg):
         cipher = AES.new(self.password_hash, AES.MODE_EAX)
         ciphertext, tag = cipher.encrypt_and_digest(msg.encode("latin-1"))
-        return base64.b64encode(ciphertext+b"..."+cipher.nonce)
+        return base64.b64encode(ciphertext+b"[SEP]"+cipher.nonce)
 
     def dec(self, msg):
-        ar = base64.b64decode(msg).decode("latin-1").split("...")
+        ar = base64.b64decode(msg).decode("latin-1").split("[SEP]")
         cipher = AES.new(self.password_hash, AES.MODE_EAX, nonce=ar[1].encode("latin-1"))
         return cipher.decrypt(ar[0].encode("latin-1")).decode("latin-1")
 
