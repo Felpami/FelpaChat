@@ -18,7 +18,7 @@ python .\FelpaChat.py
 
 For server user, use ```\help``` to show the available command.
 
-Use ```\kick <Username>``` to kick someone from the server.
+Use ```\kick <Username>``` to kick someone from the server.\
 Use ```\log``` to start logging chat to a file (TO-DO)
 
 ## Demo
