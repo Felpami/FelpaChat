@@ -199,11 +199,17 @@ class felpa_server():
                 conn.recv(1024)
                 i += 1
             conn.sendall(self.enc("[END]"))
+
+            conn.recv(1024)
+
             rnd = random.randint(0, len(self.color) - 1)
             color = self.color[rnd]
             self.user_color_a.append(color)
             self.color.remove(color)
             conn.sendall(self.enc(f"{color}"))
+
+            conn.recv(1024)
+
         except SocketError as e:
             print(e)
             conn.close()
