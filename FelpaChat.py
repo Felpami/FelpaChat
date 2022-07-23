@@ -40,7 +40,10 @@ def main():
     window_menu.TKroot.focus_force()
     store = ["", 7777, "", "Password"]
     while True:
-        event, values = window_menu.read()
+        try:
+            event, values = window_menu.read()
+        except KeyboardInterrupt:
+            return
         if event == "Host":
             while True:
                 layout_host = [[sg.Text('Server IP      ', font=font2), sg.InputText(font=font1, key="IP", size=(21,1))],
@@ -56,10 +59,13 @@ def main():
                 window_host["Dimension"].Update(5)
                 window_host["Username"].Update("Admin")
                 window_host["Password_host"].Update("Password")
-                event, values = window_host.read()
+                try:
+                    event, values = window_host.read()
+                except KeyboardInterrupt:
+                    return
                 if event == "Exit" or event == sg.WINDOW_CLOSED:
                     window_host.close()
-                    break
+                    return
                 else:
                     try:
                         if int(values["Port"]) > 65536 or int(values["Dimension"]) > 99:
@@ -101,7 +107,10 @@ def main():
                 window_connect["Port"].Update(store[1])
                 window_connect["Username"].Update(store[2])
                 window_connect["Password_connect"].Update(store[3])
-                event, values = window_connect.read()
+                try:
+                    event, values = window_connect.read()
+                except KeyboardInterrupt:
+                    return
                 if event == "Exit" or event == sg.WINDOW_CLOSED:
                     window_connect.close()
                     break
@@ -118,7 +127,7 @@ def main():
                                 popup("Password cannot be empty.")
                             elif "[SEP]" in values["Username"]:
                                 popup("Cannot set username with keyword '[SEP]'.")
-                                window_host.close()
+                                window_connect.close()
                             else:
                                 password_hash = hashlib.sha256(values["Password_connect"].encode()).digest()
                                 cln = felpa_client(store[0], store[1], store[2], password_hash,
