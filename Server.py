@@ -3,6 +3,7 @@ import threading
 import random
 import PySimpleGUI as sg
 import playsound
+import base64
 from socket import error as SocketError
 from Crypto.Cipher import AES
 
@@ -96,13 +97,20 @@ class felpa_server():
                   'grey84', 'grey85', 'grey86', 'grey87', 'grey88', 'grey89', 'grey90', 'grey91', 'grey92',
                   'grey93', 'grey94', 'grey95', 'grey97', 'grey98', 'grey99']
 
+    def popup(self, str):
+        layout_popup = [[sg.Text(str)], [sg.Button("Exit", key="Exit", size=(13, 1), button_color="orange")]]
+        layout = [[sg.Column(layout_popup, element_justification="c")]]
+        window_popup = sg.Window(title="Error", font=font2, layout=layout, finalize=True)
+        window_popup.TKroot.focus_force()
+        window_popup.read(close=True)
+
     def enc(self, msg):
         cipher = AES.new(self.password_hash, AES.MODE_EAX)
         ciphertext, tag = cipher.encrypt_and_digest(msg.encode("latin-1"))
-        return ciphertext+b"..."+cipher.nonce
+        return base64.b64encode(ciphertext+b"..."+cipher.nonce)
 
     def dec(self, msg):
-        ar = msg.decode("latin-1").split("...")
+        ar = base64.b64decode(msg).decode("latin-1").split("...")
         cipher = AES.new(self.password_hash, AES.MODE_EAX, nonce=ar[1].encode("latin-1"))
         return cipher.decrypt(ar[0].encode("latin-1")).decode("latin-1")
 
@@ -116,7 +124,7 @@ class felpa_server():
 
     def admin_command(self, command):
         if command.startswith("help"):
-            return "/kick <Username>    --->    kick user from FelpaChat."
+            return "/kick <Username>    --->    Kick user from FelpaChat.\n/log                            --->    Start to log chat to a file."
         elif command.startswith("kick"):
             cmd = command.split(" ")
             if len(cmd) != 2:
@@ -139,93 +147,123 @@ class felpa_server():
 
     def broadcast(self, msg):
         for x in self.conn_clients:
-            x.sendall(self.enc(msg))
+            try:
+                x.sendall(self.enc(msg))
+            except SocketError as e:
+                print(e)
+                pass
 
     def update(self, s, window_send):
         while (True):
             try:
                 conn, addr = s.accept()
-                if self.dimension == 0:
+            except SocketError as e:
+                # print(e)
+                break
+            if self.dimension == 0:
+                try:
                     with conn:
                         conn.sendall(self.enc("[FULL]"))
-                else:
+                except SocketError as e:
+                    print(e)
+                    break
+            else:
+                try:
                     conn.sendall(self.enc("[OK]"))
-                    self.dimension -= 1
-                    connection_t = threading.Thread(target=self.connection_loop, args=(conn, window_send,), daemon=True)
-                    connection_t.start()
-            except SocketError as e:
-                #print(e)
-                break
+                except SocketError as e:
+                    print(e)
+                    break
+                self.dimension -= 1
+                connection_t = threading.Thread(target=self.connection_loop, args=(conn, window_send,), daemon=True)
+                connection_t.start()
 
     def connection_loop(self, conn, window_send):
+        username = ""
+        color = ""
         try:
-            username = ""
-            color = ""
-            with conn:
-                password = self.dec(conn.recv(1024))
-                if password != self.password_hash.decode("latin-1"):  # Step 1 check if password is correct
-                    conn.sendall(self.enc("[DENIED]"))
-                    return
-                else:
-                    conn.sendall(self.enc("[GRANTED]"))
-                    username = self.dec(conn.recv(1024))
-                    if username in self.username_a:
-                        conn.sendall(self.enc("[ERROR_NAME]"))
-                        return
-                    else:
-                        conn.sendall(self.enc("[OK_NAME]"))
-                        self.conn_clients.append(conn)
-                        self.username_a.append(username)
-                        i = 0
-                        for user in self.username_a[:-1]:
-                            conn.sendall(self.enc(f"{user}[SEP]{self.user_color_a[i]}"))
-                            conn.recv(1024)
-                            i += 1
-                        conn.sendall(self.enc("[END]"))
-                        rnd = random.randint(0, len(self.color) - 1)
-                        color = self.color[rnd]
-                        self.user_color_a.append(color)
-                        self.color.remove(color)
-                        conn.sendall(self.enc(f"{color}"))
-                        window_send["TextBox"].print(f"[+] {username} connected to FelpaChat!",
-                                                     background_color='SeaGreen1', end='')
-                        window_send["TextBox"].print('\n', end='')
-                        self.user_list_update(window_send)
-                        self.broadcast(f"[+] {username} joined FelpaChat![SEP]{color}")
-                        playsound.playsound("incoming.wav")
-                while True:
-                    client_msg = self.dec(conn.recv(1024))
-                    if client_msg == "[QUIT]":
-                        client_msg = f"{username} disconnected from FelpaChat.[SEP]{color}"
-                        self.broadcast(f"[-] {client_msg}")
-                        self.conn_clients.remove(conn)
-                        self.username_a.remove(username)
-                        self.user_color_a.remove(color)
-                        self.color.append(color)
-                        self.dimension += 1
-                        window_send["TextBox"].print(f"[-] {username} disconnected to FelpaChat!", background_color='Orange', end='')
-                        window_send["TextBox"].print('\n', end='')
-                        self.user_list_update(window_send)
-                        playsound.playsound("error.wav", False)
-                        break
-                    else:
-                        window_send["TextBox"].print(username, text_color=color, end='')
-                        window_send["TextBox"].print(": " + client_msg)
-                        self.broadcast(f"{username}[SEP]{color}[SEP]{client_msg}")
-                        playsound.playsound("incoming.wav")
+            password = self.dec(conn.recv(1024))
+            if password != self.password_hash.decode("latin-1"):  # Step 1 check if password is correct
+                conn.sendall(self.enc("[DENIED]"))
+                return
+            conn.sendall(self.enc("[GRANTED]"))
+            username = self.dec(conn.recv(1024))
+            if username in self.username_a:
+                conn.sendall(self.enc("[ERROR_NAME]"))
+                return
+            conn.sendall(self.enc("[OK_NAME]"))
+            self.conn_clients.append(conn)
+            self.username_a.append(username)
+            i = 0
+            for user in self.username_a[:-1]:
+                conn.sendall(self.enc(f"{user}[SEP]{self.user_color_a[i]}"))
+                conn.recv(1024)
+                i += 1
+            conn.sendall(self.enc("[END]"))
+            rnd = random.randint(0, len(self.color) - 1)
+            color = self.color[rnd]
+            self.user_color_a.append(color)
+            self.color.remove(color)
+            conn.sendall(self.enc(f"{color}"))
         except SocketError as e:
-            #print(e)
+            print(e)
+            conn.close()
             self.conn_clients.remove(conn)
             self.username_a.remove(username)
             self.user_color_a.remove(color)
             self.color.append(color)
             self.dimension += 1
-            window_send["TextBox"].print(f"[-] {username} disconnected from FelpaChat.[SEP]{color}", background_color='Orange', end='')
+            window_send["TextBox"].print(f"[-] {username} disconnected from FelpaChat.[SEP]{color}",
+                                         background_color='Orange', end='')
             window_send["TextBox"].print('\n', end='')
             self.user_list_update(window_send)
             client_msg = f"{username} disconnected from FelpaChat."
             self.broadcast(f"[-] {client_msg}")
             playsound.playsound("error.wav")
+            return
+        window_send["TextBox"].print(f"[+] {username} connected to FelpaChat!",
+                                     background_color='SeaGreen1', end='')
+        window_send["TextBox"].print('\n', end='')
+        self.user_list_update(window_send)
+        self.broadcast(f"[+] {username} joined FelpaChat![SEP]{color}")
+        playsound.playsound("incoming.wav")
+        while True:
+            try:
+                client_msg = self.dec(conn.recv(1024))
+            except SocketError as e:
+                print(e)
+                conn.close()
+                self.conn_clients.remove(conn)
+                self.username_a.remove(username)
+                self.user_color_a.remove(color)
+                self.color.append(color)
+                self.dimension += 1
+                window_send["TextBox"].print(f"[-] {username} disconnected from FelpaChat.[SEP]{color}",
+                                             background_color='Orange', end='')
+                window_send["TextBox"].print('\n', end='')
+                self.user_list_update(window_send)
+                client_msg = f"{username} disconnected from FelpaChat."
+                self.broadcast(f"[-] {client_msg}")
+                playsound.playsound("error.wav")
+                break
+            if client_msg == "[QUIT]":
+                client_msg = f"{username} disconnected from FelpaChat.[SEP]{color}"
+                self.broadcast(f"[-] {client_msg}")
+                self.conn_clients.remove(conn)
+                self.username_a.remove(username)
+                self.user_color_a.remove(color)
+                self.color.append(color)
+                self.dimension += 1
+                window_send["TextBox"].print(f"[-] {username} disconnected to FelpaChat!", background_color='Orange', end='')
+                window_send["TextBox"].print('\n', end='')
+                self.user_list_update(window_send)
+                playsound.playsound("error.wav", False)
+                conn.close()
+                break
+            else:
+                window_send["TextBox"].print(username, text_color=color, end='')
+                window_send["TextBox"].print(": " + client_msg)
+                self.broadcast(f"{username}[SEP]{color}[SEP]{client_msg}")
+                playsound.playsound("incoming.wav")
 
     def server(self):  # main shell function
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -251,24 +289,29 @@ class felpa_server():
             window_send["ListBox"].print(f"[{self.username}] ", text_color="red")
             playsound.playsound("connected.wav", False)
             while (True):
-                try:
-                    event, values = window_send.read()
-                    if event == "Quit" or event == sg.WINDOW_CLOSED:
+                event, values = window_send.read()
+                if event == "Quit" or event == sg.WINDOW_CLOSED:
+                    try:
+                        for connection in self.conn_clients:
+                            connection.close()
                         s.close()
-                        window_send.close()
+                    except SocketError as e:
+                        #print(e)
                         break
-                    msg = values["Message"]
-                    if msg.startswith("/"):
-                        cmd_res = self.admin_command(msg[1:])
-                        if cmd_res != "":
-                            window_send["TextBox"].print(cmd_res)
-                    else:
-                        if "[SEP]" in msg:
-                            window_send["TextBox"].print("Cannot send message with keyword '[SEP]'.")
-                        elif len(msg) != 0:
-                            window_send["TextBox"].print(f"[{self.username}]", text_color="red", end='')
-                            window_send["TextBox"].print(": " + msg)
-                            self.broadcast(f"[{self.username}][SEP]red[SEP]{msg}")
-                except Exception as e:
-                    print(e)
+                    window_send.close()
                     break
+                msg = values["Message"]
+                if msg.startswith("/"):
+                    cmd_res = self.admin_command(msg[1:])
+                    if cmd_res != "":
+                        window_send["TextBox"].print(cmd_res)
+                else:
+                    if "[SEP]" in msg:
+                        #window_send["TextBox"].print("Cannot send message with keyword '[SEP]'.")
+                        self.popup("Cannot send message with keyword '[SEP]'.")
+                    elif len(msg) > 250:
+                        self.popup("Maximun message length is 250 character.")
+                    elif len(msg) != 0:
+                        window_send["TextBox"].print(f"[{self.username}]", text_color="red", end='')
+                        window_send["TextBox"].print(": " + msg)
+                        self.broadcast(f"[{self.username}][SEP]red[SEP]{msg}")
