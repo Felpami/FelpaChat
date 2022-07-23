@@ -31,12 +31,16 @@ class felpa_client():
     def enc(self, msg):
         cipher = AES.new(self.password_hash, AES.MODE_EAX)
         ciphertext, tag = cipher.encrypt_and_digest(msg.encode("latin-1"))
-        return base64.b64encode(ciphertext+b"..."+cipher.nonce)
+        return base64.b64encode(ciphertext+b"[SEP]"+cipher.nonce)
 
     def dec(self, msg):
-        ar = base64.b64decode(msg).decode("latin-1").split("...")
-        cipher = AES.new(self.password_hash, AES.MODE_EAX, nonce=ar[1].encode("latin-1"))
-        return cipher.decrypt(ar[0].encode("latin-1")).decode("latin-1")
+        ar = base64.b64decode(msg).decode("latin-1").split("[SEP]")
+        if len(ar) == 2:
+            cipher = AES.new(self.password_hash, AES.MODE_EAX, nonce=ar[1].encode("latin-1"))
+            return cipher.decrypt(ar[0].encode("latin-1")).decode("latin-1")
+        else:
+            print("Error")
+            return "Error"
 
     def user_list_update(self, window_send):
         window_send["ListBox"].update("")
@@ -86,7 +90,7 @@ class felpa_client():
     def client(self):
         try:
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server.connect((self.host,self.port))
+            server.connect((self.host, self.port))
             if self.dec(server.recv(1024)) != "[OK]":
                 return 1
             server.sendall(self.enc(self.password_hash.decode("latin-1")))
