@@ -11,7 +11,7 @@ font3=("Helvetica", 9)
 def popup(str):
     layout_popup = [[sg.Text(str)], [sg.Button("Exit", key="Exit", size=(13, 1), button_color="orange")]]
     layout = [[sg.Column(layout_popup,element_justification="c")]]
-    window_popup = sg.Window(title="Error", font=font2, layout=layout, finalize=True)
+    window_popup = sg.Window(title="Error", font=font2, layout=layout, finalize=True, icon='./image/icon.ico')
     window_popup.TKroot.focus_force()
     window_popup.read(close=True)
 
@@ -30,13 +30,14 @@ def get_local_ip(): #grab the local ip
         sock.close()
 
 def main():
+    sg.theme("BrownBlue")
     layout_menu = [[sg.Text('             Welcome to FelpaChat!', font=font2)],
                    [sg.Text("----------------------------------------------------", font=font2)],
                    [sg.Text("Felpami - https://github.com/Felpami/FelpaChat", font=font3)],
                    [sg.Button("Connect to a server", font=font2, size=(29, 1), key="Connect")],
                    [sg.Button("Host a server", font=font2, size=(29, 1), key="Host")],
                    [sg.Button("Quit", font=font2, button_color="orange", size=(29, 1), key="Quit")]]
-    window_menu = sg.Window(title="FelpaChat Menu", font=font2, layout=layout_menu, finalize=True)
+    window_menu = sg.Window(title="FelpaChat Menu", font=font2, layout=layout_menu, finalize=True, icon='./image/icon.ico')
     window_menu.TKroot.focus_force()
     IP = get_local_ip()
     store_connect = ["", 7777, "", "Password"]
@@ -53,8 +54,8 @@ def main():
                                [sg.Text('Dimension   ', font=font2), sg.InputText(font=font1, key="Dimension", size=(21, 1))],
                                [sg.Text('UserName   ', font=font2), sg.InputText(font=font1, key="Username", size=(21, 1))],
                                [sg.Text('Password    ', font=font2), sg.InputText(font=font1, key="Password_host", size=(21,1), password_char='*')],
-                               [sg.Button("Host", font=font2, bind_return_key=True, button_color="green", size=(17, 1)), sg.Exit(font=font2, button_color="orange", size=(17, 1))]]
-                window_host = sg.Window(title="HostForm", font=font2, layout=layout_host, finalize=True)
+                               [sg.Button("Host", font=font2, bind_return_key=True, size=(17, 1)), sg.Exit(font=font2, button_color="orange", size=(17, 1))]]
+                window_host = sg.Window(title="HostForm", font=font2, layout=layout_host, finalize=True, icon='./image/icon.ico')
                 window_host.TKroot.focus_force()
                 window_host["IP"].Update(store_host[0])
                 window_host["Port"].Update(store_host[1])
@@ -67,7 +68,7 @@ def main():
                     return
                 if event == "Exit" or event == sg.WINDOW_CLOSED:
                     window_host.close()
-                    return
+                    break
                 else:
                     store_host[0] = values["IP"]
                     ip_number_a = store_host[0].split(".")
@@ -129,7 +130,8 @@ def main():
                                 popup(f"Cannot start server on port {int(values['Port'])}")
                                 window_host.close()
                                 del serv
-                            quit()
+                            else:
+                                quit()
         elif event == "Connect":
             while (True):
                 layout_connect = [[sg.Text('Server IP      ', font=font2), sg.InputText(font=font1, key="IP", size=(21, 1))],
@@ -137,9 +139,9 @@ def main():
                                   [sg.Text('UserName   ', font=font2), sg.InputText(font=font1, key="Username", size=(21, 1))],
                                   [sg.Text('Password    ', font=font2),
                                    sg.InputText(font=font1, key="Password_connect", size=(21, 1), password_char='*')],
-                                  [sg.Button("Connect", font=font2, bind_return_key=True, size=(17, 1), button_color="green"),
+                                  [sg.Button("Connect", font=font2, bind_return_key=True, size=(17, 1)),
                                    sg.Exit(font=font2, button_color="orange", size=(17, 1))]]
-                window_connect = sg.Window(title="ConnectForm", font=font2, layout=layout_connect, finalize=True)
+                window_connect = sg.Window(title="ConnectForm", font=font2, layout=layout_connect, finalize=True, icon='./image/icon.ico')
                 window_connect.TKroot.focus_force()
                 window_connect["IP"].Update(store_connect[0])
                 window_connect["Port"].Update(store_connect[1])
@@ -220,7 +222,7 @@ def main():
                                 window_connect.close()
                                 del cln
                             else:
-                                pass
+                                quit()
             #quit()
         elif event == "Quit" or event == sg.WINDOW_CLOSED:
             window_menu.close()
