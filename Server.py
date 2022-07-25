@@ -23,6 +23,7 @@ class felpa_server():
         self.conn_clients = []
         self.password_hash = password_hash
         self.window_menu = window_menu
+        self.quit = False
         self.color = ['lemon chiffon', 'azure', 'alice blue', 'misty rose', 'dark slate gray', 'dim gray', 'slate gray',
                   'light slate gray', 'gray', 'midnight blue', 'navy', 'cornflower blue',
                   'dark slate blue',
@@ -84,7 +85,7 @@ class felpa_server():
     def popup(self, str):
         layout_popup = [[sg.Text(str)], [sg.Button("Exit", key="Exit", size=(13, 1), button_color="orange")]]
         layout = [[sg.Column(layout_popup, element_justification="c")]]
-        window_popup = sg.Window(title="Error", font=font2, layout=layout, finalize=True)
+        window_popup = sg.Window(title="Error", font=font2, layout=layout, finalize=True, icon='./image/icon.ico')
         window_popup.TKroot.focus_force()
         window_popup.read(close=True)
 
@@ -202,9 +203,7 @@ class felpa_server():
             self.user_color_a.remove(color)
             self.color.append(color)
             self.dimension += 1
-            window_send["TextBox"].print(f"{username} disconnected from FelpaChat[SEP]{color}",
-                                         background_color='Orange', end='')
-            window_send["TextBox"].print('\n', end='')
+            window_send["TextBox"].print(f"{username} disconnected from FelpaChat[SEP]{color}", text_color='Orange')
             self.user_list_update(window_send)
             self.broadcast(f"{username} disconnected from FelpaChat")
             playsound.playsound("error.wav")
@@ -220,17 +219,17 @@ class felpa_server():
             except SocketError as e:
                 print(e)
                 conn.close()
-                self.conn_clients.remove(conn)
-                self.username_a.remove(username)
-                self.user_color_a.remove(color)
-                self.color.append(color)
-                self.dimension += 1
-                window_send["TextBox"].print(f"{username} disconnected from FelpaChat[SEP]{color}",
-                                             background_color='Orange', end='')
-                window_send["TextBox"].print('\n', end='')
-                self.user_list_update(window_send)
-                self.broadcast(f"{username} disconnected from FelpaChat")
-                playsound.playsound("error.wav")
+                if not self.quit:
+                    print(self.quit)
+                    self.conn_clients.remove(conn)
+                    self.username_a.remove(username)
+                    self.user_color_a.remove(color)
+                    self.color.append(color)
+                    self.dimension += 1
+                    window_send["TextBox"].print(f"{username} disconnected from FelpaChat[SEP]{color}", text_color='Orange')
+                    self.user_list_update(window_send)
+                    self.broadcast(f"{username} disconnected from FelpaChat")
+                    playsound.playsound("error.wav")
                 break
             if client_msg == "[QUIT]":
                 self.broadcast(f"{username} disconnected from FelpaChat[SEP]{color}")
@@ -239,8 +238,7 @@ class felpa_server():
                 self.user_color_a.remove(color)
                 self.color.append(color)
                 self.dimension += 1
-                window_send["TextBox"].print(f"{username} disconnected to FelpaChat", text_color='Orange', end='')
-                window_send["TextBox"].print('\n', end='')
+                window_send["TextBox"].print(f"{username} disconnected to FelpaChat", text_color='Orange')
                 self.user_list_update(window_send)
                 playsound.playsound("error.wav", False)
                 conn.close()
@@ -264,9 +262,9 @@ class felpa_server():
             layout_recv = [[sg.Multiline(size=(67, 20), font=font1, disabled=True, key="TextBox"),sg.Multiline(size=(17,20), font=font1, disabled=True, key="ListBox")]]
             layout_send = [
                 [sg.Text('Message', font=font2), sg.InputText('Message', do_not_clear=False, font=font1, key="Message",size=(61,1)),
-                 sg.Button("Send", font=font2, button_color="green", bind_return_key=True, size=(10,1)),
+                 sg.Button("Send", font=font2, bind_return_key=True, size=(10,1)),
                  sg.Button("Quit", font=font2, button_color="orange", size=(10,1))]]
-            window_send = sg.Window(title=f"FelpaChat - Server", font=font2, layout=[[layout_recv, sg.VSeparator(), layout_send]], finalize=True)
+            window_send = sg.Window(title=f"FelpaChat - Server", font=font2, layout=[[layout_recv, sg.VSeparator(), layout_send]], finalize=True, icon='./image/icon.ico')
             update_t = threading.Thread(target=self.update, args=(s, window_send,), daemon=True)
             update_t.start()
             window_send.TKroot.focus_force()
@@ -276,15 +274,17 @@ class felpa_server():
             while (True):
                 event, values = window_send.read()
                 if event == "Quit" or event == sg.WINDOW_CLOSED:
+                    self.quit = True
                     try:
                         for connection in self.conn_clients:
                             connection.close()
                         s.close()
+                        window_send.close()
+                        break
                     except SocketError as e:
                         #print(e)
+                        window_send.close()
                         break
-                    window_send.close()
-                    break
                 msg = values["Message"]
                 if msg.startswith("/"):
                     cmd_res = self.admin_command(msg[1:])
