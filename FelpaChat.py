@@ -38,8 +38,9 @@ def main():
                    [sg.Button("Quit", font=font2, button_color="orange", size=(29, 1), key="Quit")]]
     window_menu = sg.Window(title="FelpaChat Menu", font=font2, layout=layout_menu, finalize=True)
     window_menu.TKroot.focus_force()
+    IP = get_local_ip()
     store_connect = ["", 7777, "", "Password"]
-    store_host = [get_local_ip(), 7777, 5, "Admin", "Password"]
+    store_host = [IP, 7777, 5, "Admin", "Password"]
     while True:
         try:
             event, values = window_menu.read()
@@ -82,18 +83,7 @@ def main():
                         popup("Incorrect port number.")
                         store_host[1] = 7777
                         window_host.close()
-                    elif len(ip_number_a) != 4:
-                        popup("Incorrect IP address.")
-                        store_host[0] = ""
-                        window_host.close()
-                    elif len(ip_number_a) == 4:
-                        for number in ip_number_a:
-                            if not number.isdigit():
-                                popup("Incorrect IP address.")
-                                store_host[0] = ""
-                                window_host.close()
-                                break
-                    if not store_host[2].isdigit():
+                    elif not store_host[2].isdigit():
                         popup("Dimension must be a number.")
                         store_host[2] = "5"
                         window_host.close()
@@ -117,16 +107,29 @@ def main():
                         popup("Maximun password length is 300 characters.")
                         store_host[4] = ""
                         window_host.close()
-                    else:
-                        password_hash = hashlib.sha256(values["Password_host"].encode()).digest()
-                        serv = felpa_server(store_host[0], int(store_host[1]), int(store_host[2]), store_host[3], password_hash, window_menu)
+                    elif len(ip_number_a) != 4:
+                        popup("Incorrect IP address.")
+                        store_host[0] = IP
                         window_host.close()
-                        ret = serv.server()
-                        if ret == 0:
-                            popup(f"Cannot start server on port {int(values['Port'])}")
+                    elif len(ip_number_a) == 4:
+                        found = False
+                        for number in ip_number_a:
+                            if not number.isdigit():
+                                popup("Incorrect IP address.")
+                                store_host[0] = IP
+                                window_host.close()
+                                found = True
+                                break
+                        if not found:
+                            password_hash = hashlib.sha256(values["Password_host"].encode()).digest()
+                            serv = felpa_server(store_host[0], int(store_host[1]), int(store_host[2]), store_host[3], password_hash, window_menu)
                             window_host.close()
-                            del serv
-                        quit()
+                            ret = serv.server()
+                            if ret == 0:
+                                popup(f"Cannot start server on port {int(values['Port'])}")
+                                window_host.close()
+                                del serv
+                            quit()
         elif event == "Connect":
             while (True):
                 layout_connect = [[sg.Text('Server IP      ', font=font2), sg.InputText(font=font1, key="IP", size=(21, 1))],
@@ -163,18 +166,7 @@ def main():
                         popup("Incorrect port number.")
                         store_connect[1] = 7777
                         window_connect.close()
-                    elif len(ip_number_a) != 4:
-                        popup("Incorrect IP address.")
-                        store_connect[0] = ""
-                        window_connect.close()
-                    elif len(ip_number_a) == 4:
-                        for number in ip_number_a:
-                            if not number.isdigit():
-                                popup("Incorrect IP address.")
-                                store_connect[0] = ""
-                                window_connect.close()
-                                break
-                    if store_connect[2] == "":
+                    elif store_connect[2] == "":
                         popup("Username cannot be empty.")
                         store_connect[2] = ""
                         window_connect.close()
@@ -192,30 +184,43 @@ def main():
                         popup("Maximun password length is 300 characters.")
                         store_connect[3] = ""
                         window_connect.close()
-                    else:
-                        password_hash = hashlib.sha256(values["Password_connect"].encode()).digest()
-                        cln = felpa_client(store_connect[0], int(store_connect[1]), store_connect[2], password_hash,
-                                           window_connect, window_menu)
-                        ret = cln.client()
-                        if ret == 0:
-                            popup("Cannot contact server, retry.")
-                            window_connect.close()
-                            # print("[-] Access denied.")
-                            del cln
-                        elif ret == 1:
-                            popup("Server is already full.")
-                            window_connect.close()
-                            del cln
-                        elif ret == 2:
-                            popup("Incorrect password, retry.")
-                            window_connect.close()
-                            del cln
-                        elif ret == 3:
-                            popup("Username already in use.")
-                            window_connect.close()
-                            del cln
-                        else:
-                            pass
+                    elif len(ip_number_a) != 4:
+                        popup("Incorrect IP address.")
+                        store_connect[0] = ""
+                        window_connect.close()
+                    elif len(ip_number_a) == 4:
+                        found = False
+                        for number in ip_number_a:
+                            if not number.isdigit():
+                                popup("Incorrect IP address.")
+                                store_connect[0] = ""
+                                window_connect.close()
+                                found = True
+                                break
+                        if not found:
+                            password_hash = hashlib.sha256(values["Password_connect"].encode()).digest()
+                            cln = felpa_client(store_connect[0], int(store_connect[1]), store_connect[2], password_hash,
+                                               window_connect, window_menu)
+                            ret = cln.client()
+                            if ret == 0:
+                                popup("Cannot contact server, retry.")
+                                window_connect.close()
+                                # print("[-] Access denied.")
+                                del cln
+                            elif ret == 1:
+                                popup("Server is already full.")
+                                window_connect.close()
+                                del cln
+                            elif ret == 2:
+                                popup("Incorrect password, retry.")
+                                window_connect.close()
+                                del cln
+                            elif ret == 3:
+                                popup("Username already in use.")
+                                window_connect.close()
+                                del cln
+                            else:
+                                pass
             #quit()
         elif event == "Quit" or event == sg.WINDOW_CLOSED:
             window_menu.close()
