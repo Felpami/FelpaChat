@@ -90,14 +90,21 @@ class felpa_client():
         try:
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server.connect((self.host, self.port))
-            if self.dec(server.recv(SIZE)) != "[OK]":
+            response = self.dec(server.recv(SIZE))
+            if response == "[OK]":
+                server.sendall(self.enc(self.username))
+                if self.dec(server.recv(SIZE)) != "[OK_NAME]":
+                    server.close()
+                    return 3
+            elif response == "[FULL]":
+                server.close()
                 return 1
-            server.sendall(self.enc(self.password_hash.decode("latin-1")))
-            if self.dec(server.recv(SIZE)) != "[GRANTED]":
+            else:
+                server.close()
                 return 2
-            server.sendall(self.enc(self.username))
-            if self.dec(server.recv(SIZE)) != "[OK_NAME]":
-                return 3
+            #server.sendall(self.enc(self.password_hash.decode("latin-1")))
+            #if self.dec(server.recv(SIZE)) != "[GRANTED]":
+            #    return 2
         except SocketError as e:
             #print(e)
             #self.popup("Cannot contact server, retry.")
