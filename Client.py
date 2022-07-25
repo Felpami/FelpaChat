@@ -26,7 +26,7 @@ class felpa_client():
     def popup(self, str):
         layout_popup = [[sg.Text(str)], [sg.Button("Exit", key="Exit", size=(13, 1), button_color="orange")]]
         layout = [[sg.Column(layout_popup, element_justification="c")]]
-        window_popup = sg.Window(title="Error", font=font2, layout=layout, finalize=True)
+        window_popup = sg.Window(title="Error", font=font2, layout=layout, finalize=True, icon='./image/icon.ico')
         window_popup.TKroot.focus_force()
         window_popup.read(close=True)
 
@@ -100,8 +100,8 @@ class felpa_client():
                 return 3
         except SocketError as e:
             #print(e)
-            self.popup("Cannot contact server, retry.")
-            return
+            #self.popup("Cannot contact server, retry.")
+            return 0
         while True:
             try:
                 msg = self.dec(server.recv(SIZE)).split("[SEP]")
@@ -132,11 +132,11 @@ class felpa_client():
         layout_send = [
             [sg.Text('Message', font=font2),
              sg.InputText('Message', do_not_clear=False, font=font1, key="Message", size=(61, 1)),
-             sg.Button("Send", font=font2, button_color="green", bind_return_key=True, size=(10, 1)),
+             sg.Button("Send", font=font2, bind_return_key=True, size=(10, 1)),
              sg.Button("Quit", font=font2, button_color="orange", size=(10, 1))]]
         self.window_menu.close()
         self.window.close()
-        window_send = sg.Window(title=f"FelpaChat - Logged in as {self.username}", font=font2, layout=[[layout_recv, sg.VSeparator(), layout_send]], finalize=True)
+        window_send = sg.Window(title=f"FelpaChat - Logged in as {self.username}", font=font2, layout=[[layout_recv, sg.VSeparator(), layout_send]], finalize=True, icon='./image/icon.ico')
         window_send.TKroot.focus_force()
         receive_t = threading.Thread(target=self.receive_msg, args=(server, window_send,), daemon=True)
         receive_t.start()
@@ -153,7 +153,7 @@ class felpa_client():
                     #print(e)
                     #self.popup("Cannot contact server, retry.")
                     window_send.close()
-                    return
+                    return 0
             else:
                 msg = values["Message"]
                 if "[SEP]" in msg:
