@@ -17,7 +17,7 @@ class felpa_client():
         self.host = host
         self.port = port
         self.username = username
-        self.username_a = []
+        self.username_a = [self.username]
         self.user_color_a = []
         self.color = ""
         self.password_hash = password_hash
@@ -142,6 +142,11 @@ class felpa_client():
         self.window.close()
         window_send = sg.Window(title=f"FelpaChat - Logged in as {self.username}", font=font2, layout=[[layout_recv, sg.VSeparator(), layout_send]], finalize=True, icon='./image/icon.ico')
         window_send.TKroot.focus_force()
+        window_send["TextBox"].print(f"{self.username} connected to FelpaChat", text_color="green")
+
+        self.user_color_a.append(self.color)
+        self.user_list_update(window_send)
+
         receive_t = threading.Thread(target=self.receive_msg, args=(server, window_send,), daemon=True)
         receive_t.start()
         count = 0
