@@ -8,6 +8,7 @@ font1=("Helvetica", 14)
 font2=("Helvetica", 12)
 font3=("Helvetica", 9)
 
+# Felpalo
 
 def popup(str):
     layout_popup = [[sg.Text(str)], [sg.Button("Exit", key="Exit", size=(13, 1), button_color="orange")]]
