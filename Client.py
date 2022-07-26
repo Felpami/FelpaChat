@@ -97,6 +97,8 @@ class felpa_client():
                 if self.dec(server.recv(SIZE)) != "[OK_NAME]":
                     server.close()
                     return 3
+                else:
+                    server.sendall(self.enc("[OK]"))
             elif response == "[SERVER_FULL]":
                 server.close()
                 return 1
@@ -106,6 +108,14 @@ class felpa_client():
         except SocketError as e:
             #print(e)
             return 0
+        try:
+            self.color = self.dec(server.recv(SIZE))
+            self.user_color_a.append(self.color)
+            server.sendall(self.enc("[OK]"))
+        except SocketError as e:
+            # print(e)
+            self.popup("Cannot contact server, retry.")
+            return
         while True:
             try:
                 msg = self.dec(server.recv(SIZE)).split("[SEP]")
@@ -113,6 +123,7 @@ class felpa_client():
                 #print(e)
                 return 0
             if msg[0] == "[END]":
+                server.sendall(self.enc("[OK]"))
                 break
             else:
                 self.username_a.append(msg[0])
@@ -123,14 +134,6 @@ class felpa_client():
                     #print(e)
                     self.popup("Cannot contact server, retry.")
                     return
-        try:
-            server.sendall(self.enc("[OK]"))
-            self.color = self.dec(server.recv(SIZE))
-            server.sendall(self.enc("[OK]"))
-        except SocketError as e:
-            # print(e)
-            self.popup("Cannot contact server, retry.")
-            return
         layout_recv = [[sg.Multiline(size=(67, 20), font=font1, disabled=True, key="TextBox"),
                         sg.Multiline(size=(17, 20), font=font1, disabled=True, key="ListBox")]]
         layout_send = [
@@ -144,7 +147,6 @@ class felpa_client():
         window_send.TKroot.focus_force()
         window_send["TextBox"].print(f"{self.username} connected to FelpaChat", text_color="green")
 
-        self.user_color_a.append(self.color)
         self.user_list_update(window_send)
 
         receive_t = threading.Thread(target=self.receive_msg, args=(server, window_send,), daemon=True)

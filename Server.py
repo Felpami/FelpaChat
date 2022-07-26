@@ -182,19 +182,22 @@ class felpa_server():
             conn.sendall(self.enc("[OK_NAME]"))
             self.conn_clients.append(conn)
             self.username_a.append(username)
-            i = 0
-            for user in self.username_a[:-1]:
-                conn.sendall(self.enc(f"{user}[SEP]{self.user_color_a[i]}"))
-                conn.recv(SIZE)
-                i += 1
-            conn.sendall(self.enc("[END]"))
             conn.recv(SIZE)
+
             rnd = random.randint(0, len(self.color) - 1)
             color = self.color[rnd]
             self.user_color_a.append(color)
             self.color.remove(color)
             conn.sendall(self.enc(f"{color}"))
 
+            conn.recv(SIZE)
+
+            i = 0
+            for user in self.username_a[:-1]:
+                conn.sendall(self.enc(f"{user}[SEP]{self.user_color_a[i]}"))
+                conn.recv(SIZE)
+                i += 1
+            conn.sendall(self.enc("[END]"))
             conn.recv(SIZE)
         except SocketError as e:
             print(e)
