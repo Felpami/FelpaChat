@@ -77,6 +77,7 @@ class felpa_client():
                     if user in self.username_a:
                         self.user_color_a.remove(self.user_color_a[self.username_a.index(user)])
                         self.username_a.remove(user)
+                        print(self.user_color_a)
                     self.user_list_update(window_send)
                     playsound.playsound("error.wav", False)
                 else:

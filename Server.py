@@ -207,7 +207,7 @@ class felpa_server():
             self.user_color_a.remove(color)
             self.color.append(color)
             self.dimension += 1
-            window_send["TextBox"].print(f"{username} disconnected from FelpaChat[SEP]{color}", text_color='Orange')
+            window_send["TextBox"].print(f"{username} disconnected from FelpaChat", text_color='Orange')
             self.user_list_update(window_send)
             self.broadcast(f"{username} disconnected from FelpaChat", self.conn_clients)
             playsound.playsound("error.wav", False)
@@ -231,7 +231,7 @@ class felpa_server():
                 self.user_color_a.remove(color)
                 self.color.append(color)
                 self.dimension += 1
-                window_send["TextBox"].print(f"{username} disconnected from FelpaChat[SEP]{color}", text_color='Orange')
+                window_send["TextBox"].print(f"{username} disconnected from FelpaChat", text_color='Orange')
                 self.user_list_update(window_send)
                 self.broadcast(f"{username} disconnected from FelpaChat", self.conn_clients)
                 playsound.playsound("error.wav", False)
@@ -249,7 +249,7 @@ class felpa_server():
                 self.user_color_a.remove(color)
                 self.color.append(color)
                 self.dimension += 1
-                self.broadcast(f"{username} disconnected from FelpaChat[SEP]{color}", self.conn_clients)
+                self.broadcast(f"{username} disconnected from FelpaChat", self.conn_clients)
                 window_send["TextBox"].print(f"{username} disconnected to FelpaChat", text_color='Orange')
                 self.user_list_update(window_send)
                 playsound.playsound("error.wav", False)
