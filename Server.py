@@ -5,8 +5,10 @@ import PySimpleGUI as sg
 import playsound
 import base64
 import time
+import emoji
 from socket import error as SocketError
 from Crypto.Cipher import AES
+from emoji_felpa import emoji_converter
 
 font1=("Helvetica", 14)
 font2=("Helvetica", 12)
@@ -111,28 +113,35 @@ class felpa_server():
             window_send["ListBox"].print(user, text_color=self.user_color_a[i])
             i += 1
 
-    def admin_command(self, command):
+    def admin_command(self, command, window_send):
         if command.startswith("help"):
-            return "/kick <Username>    --->    Kick user from FelpaChat.\n/log                            --->    Start to log chat to a file."
+            window_send["TextBox"].print("/kick <Username>    --->    Kick user from FelpaChat.")
+            window_send["TextBox"].print("/log                            --->    Start to log chat to a file.")
+            #return "/kick <Username>    --->    Kick user from FelpaChat.\n/log                            --->    Start to log chat to a file."
         elif command.startswith("kick"):
             cmd = command.split(" ")
             if len(cmd) != 2:
-                return "Invalid use of command /kick <Username>."
+                window_send["TextBox"].print("Invalid use of command /kick <Username>.", text_color="orange")
+                #return "Invalid use of command /kick <Username>."
             elif cmd[1] in self.username_a and cmd[1] != self.username:
                 position = self.username_a.index(cmd[1])
                 try:
                     self.conn_clients[position-1].close()
-                    return f"[+] {cmd[1]} kicked successfully!"
+                    window_send["TextBox"].print(f"{cmd[1]} kicked successfully!", text_color="green")
+                    #return f"{cmd[1]} kicked successfully!"
                 except (SocketError, Exception) as e:
                     #print(e)
-                    return "Error."
+                    #return "Error."
                     pass
             else:
-                return "Clients do not exists."
+                window_send["TextBox"].print("Clients do not exists.", text_color="orange")
+                #return "Clients do not exists."
         elif command.startswith("log"):
-            return "Started logging to C:\\HEHE"
+            window_send["TextBox"].print("Started logging to C:\\HEHE")
+            #return "Started logging to C:\\HEHE"
         else:
-            return "Invalid command."
+            window_send["TextBox"].print("Invalid command.", text_color="orange")
+            #return "Invalid command."
 
     def broadcast(self, msg, conn_array):
         for x in conn_array:
@@ -241,7 +250,7 @@ class felpa_server():
                 self.broadcast(f"{username}[SEP]{color}[SEP]{client_msg}",
                                self.conn_clients[:index] + self.conn_clients[index + 1:])
                 window_send["TextBox"].print(username, text_color=color, end='')
-                window_send["TextBox"].print(": " + client_msg)
+                window_send["TextBox"].print(": " + emoji.emojize(client_msg))
                 playsound.playsound("incoming.wav", False)
             else:
                 self.conn_clients.remove(conn)
@@ -297,11 +306,9 @@ class felpa_server():
                         #print(e)
                         window_send.close()
                         break
-                msg = values["Message"]
+                msg = emoji_converter(values["Message"])
                 if msg.startswith("/"):
-                    cmd_res = self.admin_command(msg[1:])
-                    if cmd_res != "":
-                        window_send["TextBox"].print(cmd_res)
+                    self.admin_command(msg[1:], window_send)
                 else:
                     if "[SEP]" in msg:
                         #window_send["TextBox"].print("Cannot send message with keyword '[SEP]'.")
@@ -311,7 +318,7 @@ class felpa_server():
                     elif len(msg) != 0:
                         if count < 10:
                             window_send["TextBox"].print(f"[{self.username}]", text_color="red", end='')
-                            window_send["TextBox"].print(": " + msg)
+                            window_send["TextBox"].print(": " + emoji.emojize(msg))
                             self.broadcast(f"[{self.username}][SEP]red[SEP]{msg}", self.conn_clients)
                             count += 1
                         else:

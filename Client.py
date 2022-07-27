@@ -4,8 +4,10 @@ import playsound
 import PySimpleGUI as sg
 import base64
 import time
+import emoji
 from socket import error as SocketError
 from Crypto.Cipher import AES
+from emoji_felpa import emoji_converter
 
 font1=("Helvetica", 14)
 font2=("Helvetica", 12)
@@ -67,7 +69,7 @@ class felpa_client():
                 break
             if len(msg) == 3:
                 window_send["TextBox"].print(msg[0],text_color=msg[1],end='')
-                window_send["TextBox"].print(": " + msg[2])
+                window_send["TextBox"].print(": " + emoji.emojize(msg[2]))
                 if msg[0] != self.username:
                     playsound.playsound("incoming.wav", False)
             else:
@@ -172,7 +174,7 @@ class felpa_client():
                     window_send.close()
                     return 0
             else:
-                msg = values["Message"]
+                msg = emoji_converter(values["Message"])
                 if "[SEP]" in msg:
                     self.popup("Cannot send message with keyword '[SEP]'.")
                 elif len(msg) > 300:
@@ -182,7 +184,7 @@ class felpa_client():
                         if count < 10:
                             server.sendall(self.enc(msg))
                             window_send["TextBox"].print(self.username, text_color=self.color, end='')
-                            window_send["TextBox"].print(": " + msg)
+                            window_send["TextBox"].print(": " + emoji.emojize(msg))
                             count += 1
                         else:
                             self.popup("Too many message sent.")
