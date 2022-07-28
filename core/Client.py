@@ -184,7 +184,7 @@ class felpa_client():
                         if count < 10:
                             server.sendall(self.enc(msg))
                             window_send["TextBox"].print(self.username, text_color=self.color, end='')
-                            window_send["TextBox"].print(": " + emoji.emojizeemoji_converter((msg)))
+                            window_send["TextBox"].print(": " + emoji.emojize(emoji_converter(msg)))
                             count += 1
                         else:
                             self.popup("Too many message sent.")
