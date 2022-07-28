@@ -1,5 +1,5 @@
-from Server import felpa_server
-from Client import felpa_client
+from core.Server import felpa_server
+from core.Client import felpa_client
 import PySimpleGUI as sg
 import hashlib
 import socket
